@@ -1,5 +1,7 @@
 ﻿using Contracts;
 using LoggerService;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Repository;
 using Service;
@@ -57,5 +59,28 @@ public static class ServiceExtentions
     public static IMvcBuilder AddCustomCsvFormatter(this IMvcBuilder builder)
     {
         return builder.AddMvcOptions(config => config.OutputFormatters.Add(new CsvOutputFormatter()));
+    }
+
+    public static void AddCustomMediaType(this IServiceCollection services)
+    {
+        services.Configure<MvcOptions>(config =>
+        {
+            var systemTextJsonFormatter =
+                config.OutputFormatters.OfType<SystemTextJsonOutputFormatter>()?.FirstOrDefault();
+
+            if (systemTextJsonFormatter != null)
+            {
+                systemTextJsonFormatter.SupportedMediaTypes.Add("application/vnd.codemaze.hateoas+json");
+            }
+
+            var xmlOutputFormatter = config.OutputFormatters
+                .OfType<XmlDataContractSerializerOutputFormatter>()?.FirstOrDefault();
+
+            if (xmlOutputFormatter != null)
+            {
+                xmlOutputFormatter.SupportedMediaTypes
+                    .Add("application/vnd.codemaze.hateoas+xml");
+            }
+        });
     }
 }

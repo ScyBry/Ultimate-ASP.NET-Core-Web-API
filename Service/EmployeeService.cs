@@ -1,9 +1,12 @@
 ﻿using System.Collections;
+using System.Dynamic;
 using AutoMapper;
 using Contracts;
 using Entities.Exceptions;
+using Entities.LinkModels;
 using Entities.Models;
 using Service.Contracts;
+using Service.DataShaping;
 using Shared.DataTransferObjects;
 using Shared.RequestFeatures;
 
@@ -14,12 +17,16 @@ internal sealed class EmployeeService : IEmployeeService
     private readonly ILoggerManager _logger;
     private readonly IMapper _mapper;
     private readonly IRepositoryManager _repository;
+    private readonly IEmployeeLinks _employeeLinks;
 
-    public EmployeeService(IRepositoryManager repository, ILoggerManager logger, IMapper mapper)
+
+    public EmployeeService(IRepositoryManager repository, ILoggerManager logger, IMapper mapper,
+        IEmployeeLinks employeeLinks)
     {
         _repository = repository;
         _logger = logger;
         _mapper = mapper;
+        _employeeLinks = employeeLinks;
     }
 
     private async Task CheckIfCompanyExists(Guid id, bool trackChanges)
@@ -40,20 +47,23 @@ internal sealed class EmployeeService : IEmployeeService
         return employeeDb;
     }
 
-    public async Task<(IEnumerable<EmployeeDto> employees, MetaData metaData)> GetEmployeesAsync(Guid companyId,
-        EmployeeParameters employeeParameters,
+    public async Task<(LinkResponse linkResponse, MetaData metaData)> GetEmployeesAsync(Guid companyId,
+        LinkParameters linkParameters,
         bool trackChanges)
     {
-        if (!employeeParameters.ValidAgeRange)
+        if (!linkParameters.employeeParameters.ValidAgeRange)
             throw new MaxAgeRangeBadRequestException();
 
         await CheckIfCompanyExists(companyId, trackChanges);
 
         var employeesWithMetaData =
-            await _repository.Employee.GetEmployeesAsync(companyId, employeeParameters, trackChanges);
-        var employeeDto = _mapper.Map<IEnumerable<EmployeeDto>>(employeesWithMetaData);
+            await _repository.Employee.GetEmployeesAsync(companyId, linkParameters.employeeParameters, trackChanges);
 
-        return (employees: employeeDto, metaData: employeesWithMetaData.MetaData);
+        var employeeDto = _mapper.Map<IEnumerable<EmployeeDto>>(employeesWithMetaData);
+        var links = _employeeLinks.TryGenerateLinks(employeeDto, linkParameters.employeeParameters.Fields, companyId,
+            linkParameters.Context);
+
+        return (linkResponse: links, metaData: employeesWithMetaData.MetaData);
     }
 
 

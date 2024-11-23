@@ -2,6 +2,7 @@
 using System.Text;
 using Entities.Models;
 using System.Linq.Dynamic.Core;
+using Repository.Extensions.Utility;
 
 namespace Repository.Extensions;
 

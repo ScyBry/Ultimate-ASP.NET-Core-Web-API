@@ -5,7 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using Contracts;
+using Entities.LinkModels;
 using Service.Contracts;
+using Service.DataShaping;
+using Shared.DataTransferObjects;
 
 namespace Service
 {
@@ -17,14 +20,14 @@ namespace Service
         public ServiceManager(
             IRepositoryManager repositoryManager,
             ILoggerManager logger,
-            IMapper mapper
-        )
+            IMapper mapper,
+            IEmployeeLinks employeeLinks)
         {
             _companyService = new Lazy<ICompanyService>(
                 () => new CompanyService(repositoryManager, logger, mapper)
             );
             _employeeService = new Lazy<IEmployeeService>(
-                () => new EmployeeService(repositoryManager, logger, mapper)
+                () => new EmployeeService(repositoryManager, logger, mapper, employeeLinks)
             );
         }
 
