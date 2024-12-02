@@ -6,8 +6,10 @@ using Shared.DataTransferObjects;
 
 namespace CompanyEmployees.Presentation.Controllers;
 
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
 [ApiController]
+[ResponseCache(CacheProfileName = "120SecondsDuration")]
 public class CompaniesController : ControllerBase
 {
     private readonly IServiceManager _service;
@@ -17,12 +19,21 @@ public class CompaniesController : ControllerBase
         _service = service;
     }
 
-    [HttpGet]
+    [HttpOptions]
+    public IActionResult GetCompaniesOptions()
+    {
+        Response.Headers.Add("Allow", "GET, OPTIONS, POST");
+
+        return Ok();
+    }
+
+    [HttpGet(Name = "GetCompanies")]
     public async Task<IActionResult> GetCompanies()
     {
         var companies = await _service.CompanyService.GetAllCompaniesAsync(false);
         return Ok(companies);
     }
+
 
     [HttpGet("{id:guid}", Name = "CompanyById")]
     public async Task<IActionResult> GetCompany(Guid id)
@@ -31,7 +42,7 @@ public class CompaniesController : ControllerBase
         return Ok(company);
     }
 
-    [HttpPost]
+    [HttpPost(Name = "CreateCompany")]
     [ServiceFilter(typeof(ValidationFilterAttribute))]
     public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreationDto company)
     {

@@ -27,12 +27,19 @@ builder.Services.AddScoped<ValidationFilterAttribute>();
 builder.Services.AddCustomMediaType();
 builder.Services.AddScoped<ValidateMediaTypeAttribute>();
 builder.Services.AddScoped<IEmployeeLinks, EmployeeLinks>();
+builder.Services.ConfigureVersioning();
+builder.Services.ConfigureResponseCaching();
+builder.Services.ConfigureHttpCacheHeaders();
+builder.Services.AddAuthentication();
+builder.Services.ConfigureIdentity();
+builder.Services.ConfigureJWT(builder.Configuration);
 builder
     .Services.AddControllers(config =>
     {
         config.RespectBrowserAcceptHeader = true;
         config.ReturnHttpNotAcceptable = true;
         config.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
+        config.CacheProfiles.Add("120SecondsDuration", new CacheProfile { Duration = 120 });
     })
     .AddXmlDataContractSerializerFormatters()
     .AddCustomCsvFormatter()
@@ -63,7 +70,9 @@ app.UseStaticFiles();
 app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All });
 
 app.UseCors("CorsPolicy");
-
+app.UseResponseCaching();
+app.UseHttpCacheHeaders();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
